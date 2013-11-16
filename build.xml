@@ -1,0 +1,80 @@
+<?xml version="1.0"?>
+<project name="servlet-demo" default="main" basedir=".">
+
+  <!-- Properties-->
+  <property name="tomcat" location="/usr/share/tomcat7" />
+  <property name="app-name" value="servlet-demo" />
+  <property name="war-name" value="servlet-demo.war" />
+  <property name="src.dir" location="src" />
+  <property name="dist.dir" location="dist" />
+  <property name="build.dir" location="build/classes" />
+  <property name="docs.dir" location="docs" />
+
+  <!-- Deletes the existing build, docs and dist directory-->
+  <target name="clean">
+    <delete dir="${build.dir}" />
+    <delete dir="${docs.dir}" />
+    <delete dir="${dist.dir}" />
+  </target>
+
+  <!-- Creates the  build, docs and dist directory-->
+  <target name="makedir">
+    <mkdir dir="${dist.dir}" />
+    <mkdir dir="${build.dir}" />
+    <mkdir dir="${docs.dir}" />
+  </target>
+
+  <!-- Compiles the java code-->
+  <target name="compile" depends="clean, makedir">
+    <javac srcdir="${src.dir}" destdir="${build.dir}">
+      <classpath>
+        <fileset dir="lib">
+          <include name="*" />
+        </fileset>
+        <fileset dir="/usr/share/tomcat7/lib">
+          <include name="*" />
+        </fileset>
+      </classpath>
+    </javac>
+  </target>
+
+  <!-- Creates Javadoc-->
+  <target name="docs" depends="compile">
+    <javadoc packagenames="src" sourcepath="${src.dir}" destdir="${docs.dir}">
+      <!-- Define which files / directory should get included, we include all -->
+      <fileset dir="${src.dir}">
+        <include name="**" />
+      </fileset>
+    </javadoc>
+  </target>
+
+  <!-- Creates the deployable jar file-->
+  <target name="jar" depends="compile">
+    <jar destfile="${dist.dir}/HelloWorld.jar" basedir="${build.dir}" />
+  </target>
+
+  <!-- Creates the deployable WAR file-->
+  <target name="war" depends="compile">
+    <war destfile="${dist.dir}/${war-name}" basedir="${dist.dir}" needxmlfile='false'>
+      <lib dir="lib" />
+      <classes dir="${build.dir}" />
+    </war>
+  </target>
+
+  <target name="deploy">
+    <exec executable="${tomcat}/bin/shutdown.sh"
+          failonerror="false"
+          osfamily="unix"/>
+    <delete dir="${tomcat}/webapps/${app-name}" />
+    <delete file="${tomcat}/webapps/${war-name}" />
+    <copy file="${dist.dir}/${war-name}" todir="${tomcat}/webapps" />
+    <exec executable="${tomcat}/bin/startup.sh"
+          failonerror="true"
+          osfamily="unix"/>
+  </target>
+
+  <target name="main" depends="compile, war">
+    <description>Main target</description>
+  </target>
+
+</project>
